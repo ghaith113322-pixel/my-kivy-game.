@@ -15,22 +15,26 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev openjdk-17-jdk-headless
+          sudo apt install -y build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev openjdk-17-jdk-headless ant
           pip install --upgrade pip
           pip install --upgrade buildozer Cython==0.29.33 kivy
 
       - name: Build with Buildozer
         run: |
+          # تنظيف شامل قبل البدء
           rm -f buildozer.spec
           buildozer init
-          # إعدادات متوافقة مع نوت 9 ومع رخص جوجل
+          
+          # تعديلات ذكية للملف لضمان عدم التوقف
           sed -i 's/package.name = myapp/package.name = falcon_game/g' buildozer.spec
           sed -i 's/android.api = 31/android.api = 33/g' buildozer.spec
-          sed -i 's/android.minapi = 21/android.minapi = 24/g' buildozer.spec
           sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
+          sed -i 's/p4a.branch = master/p4a.branch = release-2022.12.20/g' buildozer.spec
           
-          # أهم سطر للموافقة على الرخص يدوياً قبل البناء
-          mkdir -p ~/.android && touch ~/.android/repositories.cfg
+          # تقليل جودة الضغط لتسريع العملية ومنع الـ Pipe من الانقطاع
+          echo "android.release_artifact = apk" >> buildozer.spec
+          
+          # تشغيل البناء مع إجبار الموافقة على كل شيء
           yes | buildozer -v android debug
         env:
           CI: true
