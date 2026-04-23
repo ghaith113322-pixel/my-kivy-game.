@@ -5,10 +5,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
@@ -22,16 +22,14 @@ jobs:
       - name: Build with Buildozer
         run: |
           buildozer init
-          # تعديل الملف التلقائي
           sed -i 's/package.name = myapp/package.name = ghaithgame/g' buildozer.spec
           sed -i 's/package.domain = org.test/package.domain = org.ghaith/g' buildozer.spec
           sed -i 's/android.api = 31/android.api = 33/g' buildozer.spec
           sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
-          # البدء بالبناء
           yes | buildozer -v android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: game-apk
           path: bin/*.apk
