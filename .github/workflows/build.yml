@@ -1,20 +1,28 @@
 name: Build APK
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+
       - name: Install Dependencies
         run: |
           sudo apt update
           sudo apt install -y build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
-          pip install --upgrade buildozer Cython==0.29.33
+          pip install --upgrade pip
+          pip install --upgrade buildozer Cython==0.29.33 kivy
+
       - name: Build APK
         run: |
           buildozer init
@@ -22,8 +30,9 @@ jobs:
           sed -i 's/android.minapi = 21/android.minapi = 24/g' buildozer.spec
           sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
           yes | buildozer -v android debug
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v2
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
         with:
           name: game-apk
           path: bin/*.apk
