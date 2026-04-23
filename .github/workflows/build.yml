@@ -21,12 +21,20 @@ jobs:
 
       - name: Build with Buildozer
         run: |
+          # حذف أي ملفات قديمة تسبب تضارب
+          rm -f buildozer.spec
           buildozer init
-          sed -i 's/package.name = myapp/package.name = ghaithgame/g' buildozer.spec
-          sed -i 's/package.domain = org.test/package.domain = org.ghaith/g' buildozer.spec
+          # تعديل الإعدادات الأساسية لضمان التوافق مع نوت 9
+          sed -i 's/package.name = myapp/package.name = falcon_game/g' buildozer.spec
           sed -i 's/android.api = 31/android.api = 33/g' buildozer.spec
+          sed -i 's/android.minapi = 21/android.minapi = 24/g' buildozer.spec
           sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
-          yes | buildozer -v android debug
+          sed -i 's/p4a.branch = master/p4a.branch = release-2022.12.20/g' buildozer.spec
+          # أمر البناء الصافي
+          buildozer -v android debug
+        env:
+          # هذا السطر يمنع الـ Broken pipe
+          CI: true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
