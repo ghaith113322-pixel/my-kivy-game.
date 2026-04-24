@@ -12,32 +12,33 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt update
           sudo apt install -y build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev openjdk-17-jdk-headless ant
           pip install --upgrade pip
           pip install --upgrade buildozer Cython==0.29.33 kivy
 
+      - name: Pre-accept SDK Licenses
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          # تثبيت أدوات الأندرويد الأساسية مسبقاً لتجنب التوقف أثناء البناء
+          yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
+
       - name: Build with Buildozer
         run: |
-          # تنظيف جذري
           rm -rf .buildozer/
           rm -f buildozer.spec
-          
-          # صنع ملف الإعدادات وبرمجته تلقائياً
           buildozer init
+          
+          # إعدادات مخصصة لضمان الاستقرار
           sed -i 's/package.name = myapp/package.name = falcon_game/g' buildozer.spec
-          sed -i 's/package.domain = org.test/package.domain = org.ghaith/g' buildozer.spec
           sed -i 's/android.api = 31/android.api = 33/g' buildozer.spec
-          sed -i 's/android.minapi = 21/android.minapi = 24/g' buildozer.spec
           sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
           
-          # قبول رخص الأندرويد يدوياً قبل البدء
-          mkdir -p ~/.android && touch ~/.android/repositories.cfg
-          
-          # التشغيل مع إجبار الموافقة (السر هنا)
-          yes | buildozer -v android debug
+          # تشغيل البناء مع تقليل سجلات المخرجات لتجنب امتلاء الـ Pipe
+          yes | buildozer android debug
         env:
           CI: true
 
