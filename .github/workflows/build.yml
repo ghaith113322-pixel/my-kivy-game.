@@ -21,20 +21,22 @@ jobs:
 
       - name: Build with Buildozer
         run: |
-          # تنظيف شامل قبل البدء
+          # تنظيف جذري
+          rm -rf .buildozer/
           rm -f buildozer.spec
+          
+          # صنع ملف الإعدادات وبرمجته تلقائياً
           buildozer init
-          
-          # تعديلات ذكية للملف لضمان عدم التوقف
           sed -i 's/package.name = myapp/package.name = falcon_game/g' buildozer.spec
+          sed -i 's/package.domain = org.test/package.domain = org.ghaith/g' buildozer.spec
           sed -i 's/android.api = 31/android.api = 33/g' buildozer.spec
+          sed -i 's/android.minapi = 21/android.minapi = 24/g' buildozer.spec
           sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
-          sed -i 's/p4a.branch = master/p4a.branch = release-2022.12.20/g' buildozer.spec
           
-          # تقليل جودة الضغط لتسريع العملية ومنع الـ Pipe من الانقطاع
-          echo "android.release_artifact = apk" >> buildozer.spec
+          # قبول رخص الأندرويد يدوياً قبل البدء
+          mkdir -p ~/.android && touch ~/.android/repositories.cfg
           
-          # تشغيل البناء مع إجبار الموافقة على كل شيء
+          # التشغيل مع إجبار الموافقة (السر هنا)
           yes | buildozer -v android debug
         env:
           CI: true
