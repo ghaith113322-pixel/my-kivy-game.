@@ -12,24 +12,33 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Tools
+      - name: Install System Dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential git openjdk-17-jdk-headless ant
+          sudo apt install -y build-essential git openjdk-17-jdk-headless ant libzip-dev zlib1g-dev python3-setuptools
           pip install --upgrade pip
           pip install buildozer Cython==0.29.33 kivy
 
-      - name: Build APK
+      - name: Configure and Build
         run: |
+          # تنظيف كامل للمجلدات القديمة
           rm -rf .buildozer/
+          rm -f buildozer.spec
+          
           buildozer init
-          # إعدادات سريعة وخفيفة
-          sed -i 's/package.name = myapp/package.name = falcon/g' buildozer.spec
-          sed -i 's/android.api = 33/android.api = 33/g' buildozer.spec
+          
+          # إعدادات ثابتة ومجربة لتجنب الـ Broken Pipe
+          sed -i 's/package.name = myapp/package.name = falcon_game/g' buildozer.spec
+          sed -i 's/android.api = 31/android.api = 33/g' buildozer.spec
+          sed -i 's/android.minapi = 21/android.minapi = 24/g' buildozer.spec
           sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
+          
+          # البناء لمعمارية واحدة فقط لتقليل استهلاك الذاكرة
           sed -i 's/android.archs = arm64-v8a, armeabi-v7a/android.archs = arm64-v8a/g' buildozer.spec
           
-          yes | buildozer android debug
+          # أمر التشغيل مع إجبار الموافقة ومنع انقطاع الـ Pipe
+          export BUILDOZER_ALLOW_ORG_TEST_DOMAIN=1
+          yes | buildozer -v android debug
         env:
           CI: true
 
