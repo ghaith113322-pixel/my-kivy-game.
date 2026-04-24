@@ -19,25 +19,21 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade buildozer Cython==0.29.33 kivy
 
-      - name: Pre-accept SDK Licenses
-        run: |
-          mkdir -p ~/.android
-          touch ~/.android/repositories.cfg
-          # تثبيت أدوات الأندرويد الأساسية مسبقاً لتجنب التوقف أثناء البناء
-          yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
-
       - name: Build with Buildozer
         run: |
           rm -rf .buildozer/
           rm -f buildozer.spec
           buildozer init
           
-          # إعدادات مخصصة لضمان الاستقرار
+          # إعدادات "خفيفة" للسيرفر حتى ما يتعب
           sed -i 's/package.name = myapp/package.name = falcon_game/g' buildozer.spec
           sed -i 's/android.api = 31/android.api = 33/g' buildozer.spec
           sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
           
-          # تشغيل البناء مع تقليل سجلات المخرجات لتجنب امتلاء الـ Pipe
+          # التعديل السحري: بناء لمعمارية واحدة فقط (Note 9) لتجنب الـ Broken Pipe
+          sed -i 's/android.archs = arm64-v8a, armeabi-v7a/android.archs = arm64-v8a/g' buildozer.spec
+          
+          # تشغيل البناء بصمت وهدوء
           yes | buildozer android debug
         env:
           CI: true
