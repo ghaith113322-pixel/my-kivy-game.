@@ -1,18 +1,40 @@
-# 1. تنظيف شامل حتى للمجلدات المخفية
-!rm -rf .buildozer/
-!rm -rf bin/
-!rm -f buildozer.spec
+name: Build APK
+on: [push, pull_request]
 
-# 2. إنشاء ملف إعدادات جديد تماماً
-!buildozer init
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-# 3. تعديل الملف بقوة "النظام" (sed) لضمان تغيير API إلى 33
-!sed -i 's/android.api = 31/android.api = 33/g' buildozer.spec
-!sed -i 's/android.minapi = 21/android.minapi = 24/g' buildozer.spec
-!sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
 
-# 4. تثبيت الأدوات بنسخ متوافقة
-!pip install --upgrade Cython==0.29.33 buildozer
+      - name: Install Tools
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential git openjdk-17-jdk-headless ant
+          pip install --upgrade pip
+          pip install buildozer Cython==0.29.33 kivy
 
-# 5. أمر البناء النهائي مع تخطي الأسئلة
-!yes | buildozer -v android debug
+      - name: Build APK
+        run: |
+          rm -rf .buildozer/
+          buildozer init
+          # إعدادات سريعة وخفيفة
+          sed -i 's/package.name = myapp/package.name = falcon/g' buildozer.spec
+          sed -i 's/android.api = 33/android.api = 33/g' buildozer.spec
+          sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
+          sed -i 's/android.archs = arm64-v8a, armeabi-v7a/android.archs = arm64-v8a/g' buildozer.spec
+          
+          yes | buildozer android debug
+        env:
+          CI: true
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-apk
+          path: bin/*.apk
